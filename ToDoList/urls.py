@@ -20,11 +20,13 @@ from showlist import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',  views.Home),
-    path('addTodo/', views.adTodo),
-    path('delete_todo/<int:todo_id>/', views.deleteTodo),
     path('signup/', views.signup),
     path('signup_user/', views.add_user),
     path('signin/',views.signin),
     path('signin_user/', views.login),
-    path('logout/', views.logout)
+    path('logout/', views.logout),
+    path('get_data/',views.get_data),
+    path('delete_to_do/',views.delete_to_do),
+    path('edit_todo/', views.edit_todo),
+    path('add_new_todo/',views.add_new_todo)
 ]

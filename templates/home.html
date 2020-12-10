@@ -10,10 +10,10 @@
 
     <title>To do app</title>
   </head>
-  <body>
+<body >
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
-                <a class="navbar-brand">To Do App</a>
+                <a class="navbar-brand" href="/">To Do App</a>
             </div>
             {% if user.is_authenticated %}
             <form action="/logout/" method="POST">{% csrf_token %}
@@ -24,50 +24,159 @@
             {% endif %}
         </nav>
         <div class=" container mt-4" >
-            <div class="col">
-                <form action="addTodo/" method="post" class="form-inline">
-                  <input type="text" required name="content" class="form-control mb-2 mr-sm-2 input_content" placeholder="type here..." value="sadkjsdhk">
-                  <button type="submit" class="btn btn-primary mb-2">Add</button>
-                 </form>
+            <div class="col" style="padding-left: 30px;">
+                <div class="form-inline">
+                  <input id="new_content" type="text" required name="content" class="form-control mb-2 mr-sm-2 input_content" placeholder="type here..." size="50">
+                  <div id="addButton"  class="btn btn-primary mb-2">Add</div>
+                </div>
             </div>
         </div>
-        <div class="conrainer">
+        <div class="container">
             <div class="col">
-                <ul class="container mt-3 list-group">
-                    {% for todo_item in all_items %}
-                        <li class="list-group-item row">
-                            <div class="float-left to_do" value="{{ todo_item.content }}">
-                                {{ todo_item.content }}
-                            </div>
-                            <div class="float-right">
-                                <form action="delete_todo/{{todo_item.id}}/" action="post ">
-                                    <button type="submit" class="btn btn-primary btn-sm">delete</button>
-                                </form>
-                            </div>
-                            <div class="float-right " style="margin-left: 10px; margin-right: 10px;">
-                                <button  class="btn btn-primary btn-sm edit_content">edit</button>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
+                <div class="container ">
+                    <div class="col">
+                        <ul id="content_ul" class="container mt-3 list-group">
+        
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
-
-    <script>
-        let edit_button = document.getElementsByClassName("to_do")[0].parentElement
-        console.log(edit_button)
-
-
-        edit_button.addEventListener("click", function() {
-            console.log(this.innerHTML)
-        });
-
         
-        
-        
+
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script>
+
+        function table_managment(){
+    
+            $.ajax({
+                type:'GET',
+                url:/get_data/,
+                success: function(data){
+                    data.forEach(function(data){                        
+                        
+                        let htmlText  = 
+                        '<li   class="list-group-item row contents  border-top-1">'+
+                            '<span class="float-left to_do" >'+
+                                data['fields']['content']+
+                            '</span>'+
+                            '<div class="float-right" >'+
+                                '<div id="'+data['pk']+'">{% csrf_token %}'+
+                                    '<button type="submit" class="btn btn-primary btn-sm">delete</button>'+
+                                '</div>'+
+                            '</div>'+
+                            '<div class="float-right " style="margin-left: 10px; margin-right: 10px;">'+
+                                '<button  class="btn btn-primary btn-sm edit_content">edit</button>'+
+                           '</div>'+
+                        '</li>'
+                        $('#content_ul').append(htmlText)
+                    })  
+                    
+                    const addBtn = document.querySelector("#addButton")
+                    const li = document.querySelectorAll('.contents')
+
+                    li.forEach(function(item){
+                        item.addEventListener('click',(event)=>{
+
+                            if (event.target.tagName==='BUTTON'){
+                                const input = document.createElement('input')
+                                input.size = '60'
+                                input.type = 'text'
+
+                                if(event.target.textContent=='edit'){
+                                    const button = event.target
+                                    const content_to_do = item.firstElementChild
+                                    const span = item.firstElementChild
+                                    sosis = span.textContent
+                                    input.value=sosis
+                                    item.insertBefore(input, span)
+                                    item.removeChild(span)
+                                    button.textContent = "save"
+                                    
+                                }else if(event.target.textContent=='save'){
+                                    const input = item.firstElementChild
+                                    const button = event.target
+                                    if(input.value == ''){
+                                        const spanNoEdited = document.createElement('span')
+                                        spanNoEdited.classList.add('float-left', 'to_do')
+                                        spanNoEdited.textContent = sosis
+                                        item.insertBefore(spanNoEdited, input)
+                                        item.removeChild(input)
+                                        button.textContent = "edit"
+
+
+                                    }else{
+                                        $.ajax({
+                                        type:'POST',
+                                        url:/edit_todo/,
+                                        data:{
+                                                id:item.children[1].firstElementChild.getAttribute('id'),
+                                                edited_content:input.value,
+                                                csrfmiddlewaretoken: '{{ csrf_token }}',
+                                                success:function(){
+                                                    console.log(typeof(input.value))
+                                                    const spanEdited = document.createElement('span')
+                                                    spanEdited.classList.add('float-left', 'to_do')
+                                                    spanEdited.textContent = input.value
+                                                    item.insertBefore(spanEdited, input)
+                                                    item.removeChild(input)
+                                                    button.textContent = "edit"
+                                                }
+
+                                            }
+                                        })
+                                    }
+    
+                                }else if(event.target.textContent == 'delete'){
+                                    $.ajax({
+                                        type:'POST',
+                                        url:/delete_to_do/,
+                                        data:{
+                                            id:item.children[1].firstElementChild.getAttribute('id'),
+                                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                                        },   
+                                        success:function(){
+                                            item.remove()
+                                        }
+                                    })
+                                }
+                            } 
+                        })
+                    });                     
+                }
+            })
+
+        }
+       
+    $(document).ready(table_managment())
+
+
+    $('#addButton').click(function(){
+        const content_value = document.getElementById('new_content').value
+        $.ajax({
+            type:'POST',
+            url:/add_new_todo/,
+            data:{
+                to_do_item:content_value,
+                csrfmiddlewaretoken:'{{ csrf_token }}'
+            },
+            success:function(){
+                document.getElementById('new_content').value = ''
+                $('#content_ul').empty()
+                table_managment()
+            }
+        })
+    })
+
+
+
+
+
     </script>
-    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
   </body>
 </html>
+<!-- 
+action="delete_todo/'+data['pk']+'/" -->
